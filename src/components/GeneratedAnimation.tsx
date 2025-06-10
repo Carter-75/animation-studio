@@ -44,6 +44,24 @@ const GeneratedAnimation: React.FC<GeneratedAnimationProps> = ({ settings, isZoo
         container.innerHTML = '';
         const fragment = document.createDocumentFragment();
         const newParticles = [];
+        const { width, height } = container.getBoundingClientRect();
+
+        const animateParticle = (p: HTMLElement) => {
+            const currentContainer = containerRef.current;
+            if (!currentContainer) return;
+            const { width: w, height: h } = currentContainer.getBoundingClientRect();
+            
+            const animParams: anime.AnimeParams = {
+                targets: p,
+                translateX: anime.random(0, w),
+                translateY: anime.random(0, h),
+                duration: anime.random(settings.motionDuration * 0.8, settings.motionDuration * 1.2),
+                easing: settings.motionEasing || 'linear',
+                complete: () => animateParticle(p),
+            };
+
+            anime(animParams);
+        };
 
         for (let i = 0; i < settings.particleCount; i++) {
             const el = document.createElement('div');
@@ -67,51 +85,17 @@ const GeneratedAnimation: React.FC<GeneratedAnimationProps> = ({ settings, isZoo
                  el.style.height = `${settings.particleSize}px`;
             }
 
+            // Fix: Assign a random starting position immediately
+            const startX = anime.random(0, width);
+            const startY = anime.random(0, height);
+            el.style.transform = `translate(${startX}px, ${startY}px)`;
+            
             fragment.appendChild(el);
             newParticles.push(el);
         }
         container.appendChild(fragment);
         particlesRef.current = newParticles;
 
-        const { width, height } = container.getBoundingClientRect();
-
-        const animateParticle = (p: HTMLElement) => {
-            const isHorizontal = Math.random() > 0.5;
-            const startX = anime.random(0, width);
-            const startY = anime.random(0, height);
-            
-            const animParams: anime.AnimeParams = {
-                targets: p,
-                duration: anime.random(settings.motionDuration * 0.8, settings.motionDuration * 1.2),
-                easing: settings.motionEasing || 'linear',
-                complete: () => animateParticle(p), // Recursive loop for continuous animation
-            };
-            
-            // Set initial state
-            p.style.transform = `translate(${startX}px, ${startY}px)`;
-            p.style.opacity = '1';
-
-            // Define end state based on motion
-            if (isHorizontal) {
-                animParams.translateX = [startX, startX + anime.random(-width/2, width/2)];
-                animParams.translateY = [startY, anime.random(0, height)];
-            } else {
-                animParams.translateX = [startX, anime.random(0, width)];
-                animParams.translateY = [startY, startY + anime.random(-height/2, height/2)];
-            }
-
-            // Handle opacity fade out
-            if (settings.opacityBehaviour === 'fadeOut') {
-                animParams.opacity = [1, 0];
-            }
-             if (settings.scaleBehaviour === 'shrink-over-life') {
-                animParams.scale = [1, 0];
-            }
-
-
-            anime(animParams);
-        };
-        
         particlesRef.current.forEach(p => {
              setTimeout(() => animateParticle(p), anime.random(0, settings.motionDuration));
         });
@@ -125,7 +109,7 @@ const GeneratedAnimation: React.FC<GeneratedAnimationProps> = ({ settings, isZoo
                 containerRef.current.innerHTML = '';
             }
         };
-    }, [settings, isZoomed]);
+    }, [settings]);
 
     // Background Styling
     const backgroundStyle: React.CSSProperties = {
@@ -133,14 +117,8 @@ const GeneratedAnimation: React.FC<GeneratedAnimationProps> = ({ settings, isZoo
         width: '100%',
         height: '100%',
         overflow: 'hidden',
+        backgroundColor: settings.backgroundColor,
     };
-    if (settings.backgroundStyle === 'solid') {
-        backgroundStyle.backgroundColor = settings.backgroundColor;
-    } else if (settings.backgroundStyle === 'radial-gradient') {
-        backgroundStyle.background = `radial-gradient(circle, ${settings.backgroundColor}, #000)`;
-    } else if (settings.backgroundStyle === 'linear-gradient') {
-        backgroundStyle.background = `linear-gradient(to bottom, ${settings.backgroundColor}, #000)`;
-    }
 
     return <div ref={containerRef} className="animation-canvas" style={backgroundStyle} />;
 };
