@@ -5,7 +5,7 @@ import { GeneratedAnimation as Animation } from '@/animations';
 import MiniAnimationPreview from './MiniAnimationPreview';
 
 export interface HeaderProps {
-    onGenerate: (prompt: string, useFallback?: boolean) => void;
+    onGenerate: (prompt: string, useFallback?: boolean, customApiKey?: string) => void;
     isGenerating: boolean;
     isManageMode: boolean;
     onToggleManageMode: () => void;
@@ -28,11 +28,14 @@ const Header: React.FC<HeaderProps> = ({
     onPreviewClick,
 }) => {
     const [prompt, setPrompt] = useState('');
+    const [customApiKey, setCustomApiKey] = useState('');
+    const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
     const handleGenerateClick = () => {
         if (prompt.trim()) {
-            onGenerate(prompt);
+            onGenerate(prompt, false, customApiKey);
             setPrompt('');
+            setCustomApiKey('');
         }
     };
     
@@ -51,15 +54,27 @@ const Header: React.FC<HeaderProps> = ({
             <div className="header-center">
                 {!isManageMode ? (
                     <>
-                        <input
-                            type="text"
-                            className="input is-rounded"
-                            placeholder="Describe an animation..."
-                            value={prompt}
-                            onChange={(e) => setPrompt(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleGenerateClick()}
-                            disabled={isGenerating}
-                        />
+                        <div className="prompt-container">
+                             <input
+                                type="text"
+                                className="input is-rounded"
+                                placeholder="Describe an animation..."
+                                value={prompt}
+                                onChange={(e) => setPrompt(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleGenerateClick()}
+                                disabled={isGenerating}
+                            />
+                            {showApiKeyInput && (
+                                <input
+                                    type="password"
+                                    className="input is-rounded is-small"
+                                    placeholder="Paste temporary OpenAI Key..."
+                                    value={customApiKey}
+                                    onChange={(e) => setCustomApiKey(e.target.value)}
+                                    disabled={isGenerating}
+                                />
+                            )}
+                        </div>
                         <button
                             className={`button is-primary is-rounded ${isGenerating ? 'is-loading' : ''}`}
                             onClick={handleGenerateClick}
@@ -74,6 +89,13 @@ const Header: React.FC<HeaderProps> = ({
                             title="Generate a random animation"
                         >
                            🎲
+                        </button>
+                        <button
+                            className="button is-text is-small"
+                            onClick={() => setShowApiKeyInput(!showApiKeyInput)}
+                            title="Use a custom API Key"
+                        >
+                            {showApiKeyInput ? 'Default Key' : 'Custom Key'}
                         </button>
                     </>
                 ) : (

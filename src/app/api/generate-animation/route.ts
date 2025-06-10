@@ -7,10 +7,6 @@ import {
     particleDistributionOptions, edgeCollisionOptions, colorPalettes
 } from '@/animations/fallback-options';
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
-
 // Helper to build a string list of options for the prompt
 const optionsToString = (options: { value: string; description: string }[]) => {
     return options.map(o => `- "${o.value}": ${o.description}`).join('\n');
@@ -20,14 +16,19 @@ const motionEasingOptions = ['linear', 'easeInSine', 'easeOutSine', 'easeInOutSi
 
 export async function POST(req: NextRequest) {
     try {
-        const { prompt } = await req.json();
+        const { prompt, apiKey: customApiKey } = await req.json();
 
         if (!prompt) {
             return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
         }
-        if (!process.env.OPENAI_API_KEY) {
+        
+        const apiKey = customApiKey || process.env.OPENAI_API_KEY;
+
+        if (!apiKey) {
             return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 });
         }
+        
+        const openai = new OpenAI({ apiKey });
 
         const systemPrompt = `
 You are an expert animation designer. Your task is to translate a user's text prompt into a structured JSON object representing animation settings.

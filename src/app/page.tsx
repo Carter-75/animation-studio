@@ -88,7 +88,7 @@ export default function HomePage() {
         };
     };
 
-    const handleGenerate = async (prompt: string, useFallback = false) => {
+    const handleGenerate = async (prompt: string, useFallback = false, customApiKey?: string) => {
         setIsGenerating(true);
         if (useFallback) {
             const newAnimation = generateFallbackAnimation(prompt);
@@ -102,7 +102,7 @@ export default function HomePage() {
             const response = await fetch('/api/generate-animation', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt }),
+                body: JSON.stringify({ prompt, apiKey: customApiKey }),
             });
 
             if (!response.ok) {

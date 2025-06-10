@@ -258,4 +258,11 @@ body.footer-active .footer,
         transform: translateX(0);
         opacity: 1;
     }
+}
+
+.prompt-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-grow: 1;
 } 
