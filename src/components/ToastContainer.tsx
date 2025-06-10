@@ -1,19 +1,11 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useToast } from '@/context/ToastContext';
+import React from 'react';
+import { useToast, ToastType } from '@/context/ToastContext';
 
-const Toast = ({ message, onDismiss }: { message: string; onDismiss: () => void }) => {
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            onDismiss();
-        }, 10000); // The toast will disappear after 10 seconds
-
-        return () => clearTimeout(timer);
-    }, [onDismiss]);
-
+const Toast = ({ message, type, onDismiss }: { message: string; type: ToastType; onDismiss: () => void }) => {
     return (
-        <div className="toast-item" onClick={onDismiss}>
+        <div className={`toast-item toast-${type}`} onClick={onDismiss}>
             {message}
             <button className="delete is-small" style={{ marginLeft: '1rem' }}></button>
         </div>
@@ -30,7 +22,7 @@ export const ToastContainer = () => {
     return (
         <div className="toast-container">
             {toasts.map(toast => (
-                <Toast key={toast.id} message={toast.message} onDismiss={() => removeToast(toast.id)} />
+                <Toast key={toast.id} message={toast.message} type={toast.type} onDismiss={() => removeToast(toast.id)} />
             ))}
         </div>
     );

@@ -43,26 +43,35 @@ body {
 
 .header, .footer {
     position: fixed;
+    left: 0;
     width: 100%;
-    background-color: rgba(10, 10, 10, 0.8);
-    backdrop-filter: blur(5px);
-    z-index: 10;
+    background-color: rgba(20, 20, 20, 0.8);
+    backdrop-filter: blur(10px);
     transition: transform 0.3s ease-in-out;
-    padding: 1rem;
-    text-align: center;
+    z-index: 1000;
 }
 
 .header {
     top: 0;
     transform: translateY(-100%);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+}
+
+.header-center {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
 }
 
 .footer {
     bottom: 0;
     transform: translateY(100%);
+    padding: 1.5rem; /* Drastically reduce padding */
 }
 
-/* Keep header/footer open on hover or when the body has an active class */
 body.header-active .header,
 .header:hover {
     transform: translateY(0);
@@ -74,18 +83,15 @@ body.footer-active .footer,
 }
 
 .animation-grid {
-    display: flex;
-    flex-wrap: wrap;
-    flex-grow: 1;
+    display: grid;
+    gap: 8px;
+    padding: 8px;
+    width: 100%;
     height: 100vh;
-    width: 100vw;
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 .animation-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
     position: relative;
     border: 1px solid #333;
     overflow: hidden;
@@ -120,6 +126,10 @@ body.footer-active .footer,
     height: 50%;
 }
 
+.animation-overlay {
+    display: none; /* No longer show the prompt text */
+}
+
 .animation-container.zoomed {
     position: fixed;
     top: 0;
@@ -131,30 +141,112 @@ body.footer-active .footer,
     cursor: zoom-out;
 }
 
+/* Select Mode for Deletion */
+.animation-container.selectable {
+    cursor: copy;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.animation-container.selected {
+    transform: scale(0.95);
+    box-shadow: 0 0 20px 5px rgba(255, 50, 50, 0.7);
+    border-color: rgba(255, 50, 50, 0.9);
+}
+
+/* Mini Animation Preview (in Header) */
+.mini-preview-container {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 6px;
+    background-color: #1a1a1aDD;
+    transition: all 0.2s ease-in-out;
+}
+
+.mini-preview-container:hover {
+    border-color: #777;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+.mini-preview-animation {
+    width: 80px;
+    height: 45px;
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.mini-preview-label {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: #eee;
+}
+
+.label-text {
+    font-size: 0.7rem;
+    color: #999;
+    font-weight: 300;
+}
+
+.prompt-text {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+}
+
 /* Toast Notifications */
 .toast-container {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 2000;
+    z-index: 9999;
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
 .toast-item {
-    background-color: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(5px);
+    background-color: #363636;
     color: white;
-    padding: 1rem;
-    border-radius: 6px;
-    border: 1px solid #444;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-top: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     cursor: pointer;
+    transition: all 0.3s ease-in-out;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    animation: slideIn 0.3s ease-out;
+    max-width: 500px;
+}
+
+.toast-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.toast-item.toast-success {
+    background-color: #28a745; /* Green */
+}
+
+.toast-item.toast-error {
+    background-color: #dc3545; /* Red */
+}
+
+.toast-item.toast-warning {
+    background-color: #ffc107; /* Yellow */
+    color: #111;
+}
+
+.toast-item.toast-info {
+     background-color: #17a2b8; /* Blue */
 }
 
 @keyframes slideIn {

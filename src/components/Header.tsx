@@ -1,50 +1,100 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { GeneratedAnimation as Animation } from '@/animations';
+import MiniAnimationPreview from './MiniAnimationPreview';
 
-interface HeaderProps {
-    onGenerate: (prompt: string) => void;
-    onShowHint: () => void;
+export interface HeaderProps {
+    onGenerate: (prompt: string, useFallback?: boolean) => void;
     isGenerating: boolean;
+    isManageMode: boolean;
+    onToggleManageMode: () => void;
+    onDeleteSelected: () => void;
+    onDeleteAll: () => void;
+    selectedCount: number;
+    lastZoomedAnimation: Animation | null;
+    onPreviewClick: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onGenerate, onShowHint, isGenerating }) => {
+const Header: React.FC<HeaderProps> = ({
+    onGenerate,
+    isGenerating,
+    isManageMode,
+    onToggleManageMode,
+    onDeleteSelected,
+    onDeleteAll,
+    selectedCount,
+    lastZoomedAnimation,
+    onPreviewClick,
+}) => {
     const [prompt, setPrompt] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (prompt.trim() && !isGenerating) {
+    const handleGenerateClick = () => {
+        if (prompt.trim()) {
             onGenerate(prompt);
+            setPrompt('');
         }
+    };
+    
+    const handleRandomClick = () => {
+        onGenerate('A touch of randomness', true);
     };
 
     return (
         <header className="header">
-            <div className="container is-flex is-justify-content-space-between is-align-items-center">
-                <h1 className="title is-4 has-text-white mb-0 is-hidden-mobile">Animation Studio</h1>
-                
-                <form onSubmit={handleSubmit} style={{ flexGrow: 1, margin: '0 1rem' }}>
-                    <div className="field has-addons">
-                        <div className="control is-expanded">
-                            <input
-                                className="input"
-                                type="text"
-                                value={prompt}
-                                onChange={(e) => setPrompt(e.target.value)}
-                                placeholder="e.g., a swirling galaxy of stars"
-                                disabled={isGenerating}
-                            />
-                        </div>
-                        <div className="control">
-                            <button className={`button is-info ${isGenerating ? 'is-loading' : ''}`} type="submit" disabled={isGenerating}>
-                                Generate
-                            </button>
-                        </div>
+            <div className="header-left">
+                {lastZoomedAnimation && !isManageMode && (
+                    <MiniAnimationPreview animation={lastZoomedAnimation} onClick={onPreviewClick} />
+                )}
+            </div>
+            
+            <div className="header-center">
+                {!isManageMode ? (
+                    <>
+                        <input
+                            type="text"
+                            className="input is-rounded"
+                            placeholder="Describe an animation..."
+                            value={prompt}
+                            onChange={(e) => setPrompt(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleGenerateClick()}
+                            disabled={isGenerating}
+                        />
+                        <button
+                            className={`button is-primary is-rounded ${isGenerating ? 'is-loading' : ''}`}
+                            onClick={handleGenerateClick}
+                            disabled={isGenerating || !prompt.trim()}
+                        >
+                            Generate
+                        </button>
+                        <button
+                            className={`button is-light is-rounded ${isGenerating ? 'is-loading' : ''}`}
+                            onClick={handleRandomClick}
+                            disabled={isGenerating}
+                            title="Generate a random animation"
+                        >
+                           🎲
+                        </button>
+                    </>
+                ) : (
+                    <div className="manage-controls">
+                         <p>{selectedCount} selected</p>
+                        <button className="button is-danger" onClick={onDeleteSelected} disabled={selectedCount === 0}>
+                            Delete Selected
+                        </button>
+                        <button className="button is-danger is-light" onClick={onDeleteAll}>
+                            Delete All
+                        </button>
                     </div>
-                </form>
+                )}
+            </div>
 
-                <button className="button is-light is-outlined" onClick={onShowHint}>
-                    ?
+            <div className="header-right">
+                <button
+                    className={`button is-rounded ${isManageMode ? 'is-info' : 'is-light'}`}
+                    onClick={onToggleManageMode}
+                >
+                    {isManageMode ? 'Done' : 'Manage'}
                 </button>
             </div>
         </header>

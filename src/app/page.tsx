@@ -1,64 +1,103 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MatterBackground from '@/components/MatterBackground';
-import { GeneratedAnimation as GeneratedAnimationType, AnimationSettings } from '@/animations';
-import { predefinedAnimations } from '@/animations/predefined';
 import GeneratedAnimation from '@/components/GeneratedAnimation';
+import MatterBackground from '@/components/MatterBackground';
 import { useToast } from '@/context/ToastContext';
+import { AnimationSettings, GeneratedAnimation as Animation } from '@/animations';
+import * as Fallback from '@/animations/fallback-options';
 
-// Helper function to check for duplicate animation settings
-const areSettingsEqual = (a: AnimationSettings, b: AnimationSettings) => {
-    // A simple but effective way to deep compare objects
-    return JSON.stringify(a) === JSON.stringify(b);
-};
+const motionEasingOptions: AnimationSettings['motionEasing'][] = ['linear', 'easeInSine', 'easeOutSine', 'easeInOutSine', 'easeInQuad', 'easeOutQuad', 'easeInOutQuad', 'easeOutCubic', 'easeInOutCubic'];
 
 export default function HomePage() {
-    const [animations, setAnimations] = useState<GeneratedAnimationType[]>([]);
-    const [zoomedAnimation, setZoomedAnimation] = useState<GeneratedAnimationType | null>(null);
+    const [animations, setAnimations] = useState<Animation[]>([]);
+    const [zoomedAnimation, setZoomedAnimation] = useState<Animation | null>(null);
+    const [lastZoomedAnimation, setLastZoomedAnimation] = useState<Animation | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isManageMode, setIsManageMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const { addToast } = useToast();
 
-    // Load animations from localStorage on initial render
     useEffect(() => {
-        const savedAnimations = localStorage.getItem('generatedAnimations');
-        if (savedAnimations) {
-            setAnimations(JSON.parse(savedAnimations));
-        }
-    }, []);
-    
-    // Set up hover listeners and show initial toast
-    useEffect(() => {
-        const instructionalToast = () => {
-             addToast("Describe an animation in the header and click Generate!");
-        };
-
-        const hasShownToast = sessionStorage.getItem('instructionalToastShown');
-        if (!hasShownToast) {
-            instructionalToast();
-            sessionStorage.setItem('instructionalToastShown', 'true');
-        }
-        
         const handleMouseMove = (event: MouseEvent) => {
             const { clientY } = event;
-            const threshold = 30;
+            const threshold = 60; // How close to the edge to trigger
 
             document.body.classList.toggle('header-active', clientY <= threshold);
             document.body.classList.toggle('footer-active', window.innerHeight - clientY <= threshold);
         };
 
         window.addEventListener('mousemove', handleMouseMove);
+        
+        // Initial welcome toast - use sessionStorage to prevent double-toast in dev strict mode
+        if (!sessionStorage.getItem('welcomeToastShown')) {
+            try {
+                const savedAnimations = localStorage.getItem('animations');
+                if (savedAnimations) {
+                    setAnimations(JSON.parse(savedAnimations));
+                }
+                addToast("Welcome! Describe an animation in the header to begin.", 'info');
+                sessionStorage.setItem('welcomeToastShown', 'true');
+            } catch (error) {
+                console.error("Failed to load animations from localStorage", error);
+            }
+        }
 
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
             document.body.classList.remove('header-active', 'footer-active');
         };
-    }, [addToast]);
-    
-    const handleGenerate = async (prompt: string) => {
+    }, []);
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('animations', JSON.stringify(animations));
+        } catch (error) {
+            console.error("Failed to save animations to localStorage", error);
+        }
+    }, [animations]);
+
+    const generateFallbackAnimation = (prompt: string): Animation => {
+        const randomPalette = Fallback.colorPalettes[Fallback.getRandomInt(0, Fallback.colorPalettes.length - 1)];
+        
+        const settings: AnimationSettings = {
+            particleShape: Fallback.getRandomOption(Fallback.particleShapeOptions),
+            particleSize: Fallback.getRandomInt(5, 50),
+            particleCount: Fallback.getRandomInt(50, 400),
+            colorPalette: randomPalette,
+            colorStrategy: Fallback.getRandomOption(Fallback.colorStrategyOptions),
+            backgroundStyle: Fallback.getRandomOption(Fallback.backgroundStyleOptions),
+            backgroundColor: randomPalette[Fallback.getRandomInt(0, randomPalette.length - 1)],
+            motionPath: Fallback.getRandomOption(Fallback.motionPathOptions),
+            motionDuration: Fallback.getRandomInt(4000, 15000),
+            motionEasing: motionEasingOptions[Fallback.getRandomInt(0, motionEasingOptions.length - 1)],
+            particleDistribution: Fallback.getRandomOption(Fallback.particleDistributionOptions),
+            edgeCollision: Fallback.getRandomOption(Fallback.edgeCollisionOptions),
+            rotationStyle: Fallback.getRandomOption(Fallback.rotationOptions),
+            scaleBehaviour: Fallback.getRandomOption(Fallback.scaleBehaviourOptions),
+            opacityBehaviour: Fallback.getRandomOption(Fallback.opacityBehaviourOptions),
+        };
+
+        return {
+            id: uuidv4(),
+            prompt: prompt || "A touch of randomness",
+            settings: settings,
+        };
+    };
+
+    const handleGenerate = async (prompt: string, useFallback = false) => {
         setIsGenerating(true);
+        if (useFallback) {
+            const newAnimation = generateFallbackAnimation(prompt);
+            setAnimations(prev => [newAnimation, ...prev]);
+            addToast("Generated a random animation!", 'info');
+            setIsGenerating(false);
+            return;
+        }
+
         try {
             const response = await fetch('/api/generate-animation', {
                 method: 'POST',
@@ -66,83 +105,85 @@ export default function HomePage() {
                 body: JSON.stringify({ prompt }),
             });
 
-            const data = await response.json();
-
-            if (data.fallback) {
-                addToast('AI generation failed. Using a random predefined animation.');
-                
-                let fallbackSettings: AnimationSettings | undefined;
-                let attempts = 0;
-                const maxAttempts = predefinedAnimations.length;
-
-                // Try to find a predefined animation that isn't already on screen
-                while (attempts < maxAttempts) {
-                    const randomAnimation = predefinedAnimations[Math.floor(Math.random() * predefinedAnimations.length)];
-                    const isDuplicate = animations.some(anim => areSettingsEqual(anim.settings, randomAnimation));
-                    if (!isDuplicate) {
-                        fallbackSettings = randomAnimation;
-                        break;
-                    }
-                    attempts++;
-                }
-
-                // If all predefined animations are on screen, just pick a random one
-                if (!fallbackSettings) {
-                    fallbackSettings = predefinedAnimations[Math.floor(Math.random() * predefinedAnimations.length)];
-                }
-
-                const newAnimation: GeneratedAnimationType = {
-                    id: crypto.randomUUID(),
-                    prompt: `Fallback: ${prompt}`,
-                    settings: fallbackSettings,
-                };
-                setAnimations(prev => [newAnimation, ...prev]);
-                return;
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
             }
 
-            const settings: AnimationSettings = data;
-            
-            // Check for duplicates from the AI
-            const isDuplicate = animations.some(anim => areSettingsEqual(anim.settings, settings));
-            if (isDuplicate) {
-                addToast('That animation is too similar to one you already have. Try a different prompt!');
-                return;
-            }
-
-            const newAnimation: GeneratedAnimationType = {
-                id: crypto.randomUUID(),
-                prompt,
-                settings,
-            };
-
-            setAnimations(prev => {
-                const updatedAnimations = [newAnimation, ...prev];
-                localStorage.setItem('generatedAnimations', JSON.stringify(updatedAnimations));
-                return updatedAnimations;
-            });
-
+            const { settings } = await response.json();
+            const newAnimation: Animation = { id: uuidv4(), prompt, settings };
+            setAnimations(prev => [newAnimation, ...prev]);
+            addToast("AI animation generated successfully!", 'success');
         } catch (error) {
-            console.error(error);
-            addToast('Sorry, something went wrong. Please try again.');
+            console.error("Failed to generate AI animation:", error);
+            addToast("AI generation failed. Creating a random animation instead.", 'error');
+            const fallbackAnimation = generateFallbackAnimation(prompt);
+            setAnimations(prev => [fallbackAnimation, ...prev]);
         } finally {
             setIsGenerating(false);
         }
     };
 
-    const handleAnimationClick = (animation: GeneratedAnimationType) => {
-        setZoomedAnimation(prev => prev?.id === animation.id ? null : animation);
+    const handleZoom = (animation: Animation) => {
+        if (animations.length <= 1) return; // Disable zoom if only one animation
+
+        if (zoomedAnimation?.id === animation.id) {
+            setZoomedAnimation(null);
+        } else {
+            setZoomedAnimation(animation);
+            setLastZoomedAnimation(animation);
+        }
     };
 
-    const animationCount = animations.length;
-    let gridClass = '';
-    if (zoomedAnimation) {
-        gridClass = 'grid-1';
-    } else {
-        if (animationCount === 1) gridClass = 'grid-1';
-        else if (animationCount === 2) gridClass = 'grid-2';
-        else if (animationCount === 3) gridClass = 'grid-3';
-        else if (animationCount >= 4) gridClass = 'grid-4';
-    }
+    const handlePreviewClick = () => {
+        if (lastZoomedAnimation) {
+            handleZoom(lastZoomedAnimation);
+        }
+    };
+
+    const toggleManageMode = () => {
+        setIsManageMode(!isManageMode);
+        setSelectedIds(new Set()); // Clear selection when toggling mode
+    };
+
+    const handleSelect = (id: string) => {
+        if (!isManageMode) return;
+        const newSelectedIds = new Set(selectedIds);
+        if (newSelectedIds.has(id)) {
+            newSelectedIds.delete(id);
+        } else {
+            newSelectedIds.add(id);
+        }
+        setSelectedIds(newSelectedIds);
+    };
+
+    const handleDeleteSelected = () => {
+        setAnimations(animations.filter(anim => !selectedIds.has(anim.id)));
+        setSelectedIds(new Set());
+    };
+
+    const handleDeleteAll = () => {
+        setAnimations([]);
+        setSelectedIds(new Set());
+        setZoomedAnimation(null);
+    };
+
+    const getGridStyle = (count: number): React.CSSProperties => {
+        if (zoomedAnimation) return { gridTemplateColumns: '1fr' };
+        if (count === 0) return {};
+        if (count <= 3) {
+            return {
+                gridTemplateColumns: `repeat(${count}, 1fr)`,
+                gridTemplateRows: `1fr`,
+            };
+        }
+        const columns = Math.ceil(Math.sqrt(count));
+        const rows = Math.ceil(count / columns);
+        return {
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            gridTemplateRows: `repeat(${rows}, 1fr)`,
+        };
+    };
 
     const animationsToRender = zoomedAnimation ? [zoomedAnimation] : animations;
 
@@ -151,27 +192,24 @@ export default function HomePage() {
             <MatterBackground />
             <Header
                 onGenerate={handleGenerate}
-                onShowHint={() => addToast("Describe an animation in the header and click Generate!")}
                 isGenerating={isGenerating}
+                isManageMode={isManageMode}
+                onToggleManageMode={toggleManageMode}
+                onDeleteSelected={handleDeleteSelected}
+                onDeleteAll={handleDeleteAll}
+                selectedCount={selectedIds.size}
+                lastZoomedAnimation={lastZoomedAnimation}
+                onPreviewClick={handlePreviewClick}
             />
             <main>
-                <div className={`animation-grid ${gridClass}`}>
+                <div className="animation-grid" style={getGridStyle(animations.length)}>
                     {animationsToRender.map((anim) => (
                         <div
                             key={anim.id}
-                            className={`animation-container ${zoomedAnimation?.id === anim.id ? 'zoomed' : ''}`}
-                            onClick={() => handleAnimationClick(anim)}
-                            style={{
-                                cursor: !zoomedAnimation && animationCount > 1 ? 'pointer' : 'default',
-                                display: zoomedAnimation && zoomedAnimation.id !== anim.id ? 'none' : 'flex'
-                            }}
+                            className={`animation-container ${zoomedAnimation?.id === anim.id ? 'zoomed' : ''} ${selectedIds.has(anim.id) ? 'selected' : ''}`}
+                            onClick={() => isManageMode ? handleSelect(anim.id) : handleZoom(anim)}
                         >
-                            <GeneratedAnimation settings={anim.settings} />
-                            {!zoomedAnimation && (
-                                <div className="p-2 is-overlay has-background-dark-light is-size-7" style={{top: 'auto', opacity: 0.8}}>
-                                    {anim.prompt}
-                                </div>
-                            )}
+                            <GeneratedAnimation settings={anim.settings} isZoomed={zoomedAnimation?.id === anim.id} />
                         </div>
                     ))}
                 </div>

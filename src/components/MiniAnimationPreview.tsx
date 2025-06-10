@@ -1,46 +1,27 @@
 'use client';
 
 import React from 'react';
-import { AnimationComponent } from '@/animations';
+import { GeneratedAnimation as Animation } from '@/animations';
+import GeneratedAnimation from './GeneratedAnimation';
 
 interface MiniAnimationPreviewProps {
-    animation: AnimationComponent;
+    animation: Animation;
     onClick: () => void;
 }
 
 const MiniAnimationPreview: React.FC<MiniAnimationPreviewProps> = ({ animation, onClick }) => {
-    const Animation = animation.component;
-
     return (
-        <div
+        <div 
+            className="mini-preview-container" 
             onClick={onClick}
-            title={`Click to view '${animation.name}'`}
-            style={{
-                cursor: 'pointer',
-                border: '1px solid #555',
-                borderRadius: '4px',
-                width: '100px',
-                height: '60px',
-                overflow: 'hidden',
-                position: 'relative',
-                transform: 'scale(1)',
-                transition: 'transform 0.2s ease-in-out',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+            title={`Click to view: ${animation.prompt}`}
         >
-            <div
-                style={{
-                    position: 'absolute',
-                    top: '-50%',
-                    left: '-50%',
-                    width: '200%',
-                    height: '200%',
-                    transform: 'scale(0.25)', // Scale down the animation to fit
-                    pointerEvents: 'none',
-                }}
-            >
-                <Animation />
+            <div className="mini-preview-animation">
+                <GeneratedAnimation settings={animation.settings} isZoomed={false} />
+            </div>
+            <div className="mini-preview-label">
+                <span className="label-text">Last Viewed:</span>
+                <span className="prompt-text">{animation.prompt}</span>
             </div>
         </div>
     );
