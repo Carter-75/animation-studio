@@ -1,0 +1,110 @@
+/* styles/globals.css */
+@import 'bulma/css/bulma.min.css';
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+    background-color: #1a1a1a;
+    color: white;
+}
+
+.background-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+.content-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.header, .footer {
+    position: fixed;
+    width: 100%;
+    background-color: rgba(10, 10, 10, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 10;
+    transition: transform 0.3s ease-in-out;
+    padding: 1rem;
+    text-align: center;
+}
+
+.header {
+    top: 0;
+    transform: translateY(-100%);
+}
+
+.footer {
+    bottom: 0;
+    transform: translateY(100%);
+}
+
+.animation-grid {
+    display: flex;
+    flex-wrap: wrap;
+    flex-grow: 1;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+.animation-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    border: 1px solid #333;
+    overflow: hidden;
+}
+
+/* 1 animation */
+.grid-1 .animation-container {
+    width: 100%;
+    height: 100%;
+}
+
+/* 2 animations */
+.grid-2 .animation-container {
+    width: 50%;
+    height: 100%;
+}
+
+/* 3 animations */
+.grid-3 .animation-container:nth-child(1),
+.grid-3 .animation-container:nth-child(2) {
+    width: 50%;
+    height: 50%;
+}
+.grid-3 .animation-container:nth-child(3) {
+    width: 100%;
+    height: 50%;
+}
+
+/* 4+ animations (2x2 grid) */
+.grid-4 .animation-container {
+    width: 50%;
+    height: 50%;
+} 
