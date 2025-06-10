@@ -1,8 +1,8 @@
 import React from 'react';
 
-const Footer = ({ style }: { style?: React.CSSProperties }) => {
+const Footer = () => {
     return (
-        <footer className="footer" style={style}>
+        <footer className="footer">
             <div className="content has-text-centered">
                 <p className='has-text-white'>
                     <strong>Animation Portfolio</strong> by Carter.

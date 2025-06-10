@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ToastProvider } from "@/context/ToastContext";
+import { ToastContainer } from "@/components/ToastContainer";
 
 export const metadata: Metadata = {
-  title: "Next.js Animation Starter",
-  description: "A starter template for building an animation portfolio.",
+  title: "Animation Studio",
+  description: "A showcase of advanced web animations.",
 };
 
 export default function RootLayout({
@@ -14,7 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
+        <ToastProvider>
+          <ToastContainer />
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

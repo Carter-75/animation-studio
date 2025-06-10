@@ -62,6 +62,17 @@ body {
     transform: translateY(100%);
 }
 
+/* Keep header/footer open on hover or when the body has an active class */
+body.header-active .header,
+.header:hover {
+    transform: translateY(0);
+}
+
+body.footer-active .footer,
+.footer:hover {
+    transform: translateY(0);
+}
+
 .animation-grid {
     display: flex;
     flex-wrap: wrap;
@@ -107,4 +118,52 @@ body {
 .grid-4 .animation-container {
     width: 50%;
     height: 50%;
+}
+
+.animation-container.zoomed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 100;
+    border: none;
+    cursor: zoom-out;
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast-item {
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
+    color: white;
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid #444;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 } 
