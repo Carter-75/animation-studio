@@ -6,7 +6,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import GeneratedAnimation from '@/components/GeneratedAnimation';
 import MatterBackground from '@/components/MatterBackground';
-import { useToast } from '@/context/ToastContext';
 import { AnimationSettings, GeneratedAnimation as Animation } from '@/animations';
 import * as Fallback from '@/animations/fallback-options';
 
@@ -19,7 +18,6 @@ export default function HomePage() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isManageMode, setIsManageMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    const { addToast } = useToast();
 
     useEffect(() => {
         const handleMouseMove = (event: MouseEvent) => {
@@ -39,7 +37,7 @@ export default function HomePage() {
                 if (savedAnimations) {
                     setAnimations(JSON.parse(savedAnimations));
                 }
-                addToast("Welcome! Describe an animation in the header to begin.", 'info');
+                console.log("Welcome! Describe an animation in the header to begin.");
                 sessionStorage.setItem('welcomeToastShown', 'true');
             } catch (error) {
                 console.error("Failed to load animations from localStorage", error);
@@ -93,7 +91,7 @@ export default function HomePage() {
         if (useFallback) {
             const newAnimation = generateFallbackAnimation(prompt);
             setAnimations(prev => [newAnimation, ...prev]);
-            addToast("Generated a random animation!", 'info');
+            console.log("Generated a random animation!");
             setIsGenerating(false);
             return;
         }
@@ -113,10 +111,10 @@ export default function HomePage() {
             const { settings } = await response.json();
             const newAnimation: Animation = { id: uuidv4(), prompt, settings };
             setAnimations(prev => [newAnimation, ...prev]);
-            addToast("AI animation generated successfully!", 'success');
+            console.log("AI animation generated successfully!");
         } catch (error) {
             console.error("Failed to generate AI animation:", error);
-            addToast("AI generation failed. Creating a random animation instead.", 'error');
+            console.log("AI generation failed. Creating a random animation instead.");
             const fallbackAnimation = generateFallbackAnimation(prompt);
             setAnimations(prev => [fallbackAnimation, ...prev]);
         } finally {

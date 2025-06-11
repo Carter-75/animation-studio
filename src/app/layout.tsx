@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ToastProvider } from "@/context/ToastContext";
-import { ToastContainer } from "@/components/ToastContainer";
 
 export const metadata: Metadata = {
   title: "Animation Studio",
@@ -16,10 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ToastProvider>
-          <ToastContainer />
-          {children}
-        </ToastProvider>
+        {children}
       </body>
     </html>
   );
